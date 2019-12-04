@@ -27,7 +27,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       inject: true,
       // chunks: ['main'],
-      title: 'Example Aepp',
+      title: 'Stupidchain',
       template: './src/index.html',
       filename: distFolder + '/index.html',
       // Avoids building twice for dev
@@ -43,10 +43,10 @@ module.exports = {
       publicPath: '/',
       favicons: {
         start_url: '/',
-        appName: 'Example Aepp',
-        appDescription: 'Example Description.',
+        appName: 'Stupidchain',
+        appDescription: 'Stupidchain.',
         developerName: 'Aeternity Developers',
-        developerURL: 'https://github.com/kenodressel/aepp-boilerplate',
+        developerURL: 'https://github.com/thepiwo/sophia-blockchain',
         background: '#ff0d6a',
         theme_color: '#ff0d6a',
         icons: {

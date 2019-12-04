@@ -9,18 +9,18 @@
     <br/>
     <br/>
 
-    <h2 class="h2">Balances:</h2>
-    <div v-for="acc in state.chainstate" style="padding-left: 20px">
-      {{acc[0].substring(0, 10)}}...: {{acc[1]}}
-    </div>
-    <br/>
-
-    <button @click="mine()" style="border: solid gray 1px; padding: 2px;">Mine Block</button>
-    <button @click="tx()" style="border: solid gray 1px; padding: 2px;">Random Tx</button>
-    <br/>
-    <br/>
-
     <div v-if="state">
+      <h2 class="h2">Balances:</h2>
+      <div v-for="acc in state.chainstate" style="padding-left: 20px">
+        {{acc[0].substring(0, 10)}}...: {{acc[1]}}
+      </div>
+      <br/>
+
+      <button @click="mine()" style="border: solid gray 1px; padding: 2px;">Mine Block</button>
+      <button @click="tx()" style="border: solid gray 1px; padding: 2px;">Random Tx</button>
+      <br/>
+      <br/>
+
       <h2 class="h2">Pool: {{state.pool.length}}</h2>
       <br/>
 

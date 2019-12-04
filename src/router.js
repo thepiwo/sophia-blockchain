@@ -13,7 +13,7 @@ const routes = [
 const router = new Router({mode: 'hash', routes: routes})
 
 router.beforeEach((to, from, next) => {
-  document.title = `${to.meta.title} - Example Aepp`
+  document.title = `${to.meta.title} - Stupidchain`
   next()
 })
 
