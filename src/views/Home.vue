@@ -25,7 +25,7 @@
       <br/>
 
       <h2 class="h2">Chain:</h2>
-      <div v-for="[hash, data] in state.chain.sort((a, b) => b[1].header.height - a[1].header.height)">
+      <div v-for="[hash, data] in state.chain">
         {{data.header.height}} ({{hash.substring(0, 20)}}...)
         <div v-if="data.txs.length">
           <div v-for="tx in data.txs" style="padding-left: 20px">
@@ -44,11 +44,10 @@
     import {Crypto} from "@aeternity/aepp-sdk";
     import contractSource from '../../contracts/Blockchain.aes';
     import BiggerLoader from "../components/BiggerLoader";
-    import {AeButton} from "@aeternity/aepp-components";
 
     export default {
         name: 'Home',
-        components: {BiggerLoader, AeButton},
+        components: {BiggerLoader},
         data() {
             return {
                 address: null,
@@ -59,19 +58,23 @@
         },
 
         methods: {
+            async getState() {
+                this.state = (await this.contract.methods.get_state()).decodedResult;
+                this.state.chain = this.state.chain.sort((a, b) => b[1].header.height - a[1].header.height);
+                console.log(this.state);
+            },
             async mine() {
                 this.showLoading = true;
-                this.state = (await this.contract.methods.get_state()).decodedResult;
 
                 await this.contract.methods.mine(this.state.top_block_hash);
-                this.state = (await this.contract.methods.get_state()).decodedResult;
+                await this.getState();
                 this.showLoading = false;
             },
             async tx() {
                 this.showLoading = true;
 
                 await this.contract.methods.add_transaction(Crypto.generateKeyPair().publicKey, Math.ceil(Math.random() * 5000));
-                this.state = (await this.contract.methods.get_state()).decodedResult;
+                await this.getState();
                 this.showLoading = false;
             }
         },
@@ -83,8 +86,8 @@
                 await axios.post(`https://testnet.faucet.aepps.com/account/${aeternity.address}`, {}, {headers: {'content-type': 'application/x-www-form-urlencoded'}}).catch(console.error);
             }
 
-            this.contract = await aeternity.client.getContractInstance(contractSource, {contractAddress: 'ct_2JFGrL7ZhsqMRcX5mewpgWdq5gnc7CUGr3N5xhPnR63dCHZsZP'});
-            this.state = (await this.contract.methods.get_state()).decodedResult;
+            this.contract = await aeternity.client.getContractInstance(contractSource, {contractAddress: 'ct_21XWzc9aYbcQgrDJHfpTZCga4zg5PPViXCg878659NuqdKLUuz'});
+            await this.getState();
             this.showLoading = false;
         },
     };
