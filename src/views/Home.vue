@@ -83,7 +83,7 @@
                 await axios.post(`https://testnet.faucet.aepps.com/account/${aeternity.address}`, {}, {headers: {'content-type': 'application/x-www-form-urlencoded'}}).catch(console.error);
             }
 
-            this.contract = await aeternity.client.getContractInstance(contractSource, {contractAddress: 'ct_hdiANT3TR6TBu22rSt6d2Jdud7cLA92jtsPbA1C3oNszVwwwc'});
+            this.contract = await aeternity.client.getContractInstance(contractSource, {contractAddress: 'ct_2JFGrL7ZhsqMRcX5mewpgWdq5gnc7CUGr3N5xhPnR63dCHZsZP'});
             this.state = (await this.contract.methods.get_state()).decodedResult;
             this.showLoading = false;
         },
