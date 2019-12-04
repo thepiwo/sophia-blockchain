@@ -1,0 +1,100 @@
+@compiler >= 4
+
+include "List.aes"
+include "Pair.aes"
+
+contract Blockchain =
+
+  record header =
+    { prev_hash  : hash
+    , height     : int
+    , target     : int
+    , txs_hash   : hash
+    , state_hash : hash
+    , timestamp  : int
+    , nonce      : int }
+
+  record block =
+    { header : header
+    , txs    : list(transaction) }
+
+  datatype transaction = Transaction(address, address, int, int) | Coinbase(address, int)
+
+  record state =
+    { chain          : map(hash, block)
+    , pool           : map(hash, transaction)
+    , chainstate     : map(address, int)
+    , top_block_hash : hash }
+
+  entrypoint init() : state =
+    let header = genesis_header()
+    let genesis_hash = Crypto.blake2b(header)
+    { chain          = { [genesis_hash] = { header = header, txs = [] } },
+      pool           = {},
+      chainstate     = {},
+      top_block_hash = genesis_hash }
+
+  entrypoint get_state() : state = state
+
+  stateful entrypoint add_transaction(to : address, amount : int) =
+    let transaction = Transaction(Call.caller, to, amount, 100)
+    put(state{ pool[Crypto.blake2b(transaction)] = transaction })
+
+  stateful entrypoint mine(prev_hash : hash) =
+    let txs = Coinbase(Call.caller, 1000) :: List.map(Pair.snd, Map.to_list(state.pool))
+    let prev_block = state.chain[prev_hash]
+    let filtered_txs = List.filter(valid_tx, txs)
+    // todo: adjust difficulty based on mining rate
+    let updated_state = List.foldl(apply_to_chainstate(Call.caller), state.chainstate, filtered_txs)
+    let candidate = { prev_hash  = prev_hash,
+                      height     = prev_block.header.height + 1,
+                      target     = prev_block.header.target,
+                      txs_hash   = Crypto.blake2b(filtered_txs),
+                      state_hash = Crypto.blake2b(updated_state),
+                      timestamp  = Chain.timestamp,
+                      nonce      = 0 }
+    let header = mine_find_nonce(candidate)
+    add_block({ header = header, txs = filtered_txs })
+    Crypto.blake2b(header)
+
+  // internal functions
+
+  function valid_tx(transaction : transaction) =
+    switch(transaction)
+      Coinbase(to, amount) => true
+      Transaction(from, to, amount, fee) => Map.lookup_default(from, state.chainstate, 0) >= amount + fee
+
+  function apply_to_chainstate(miner : address) : (map(address, int), transaction) => map(address, int) =
+    (acc_state : map(address, int), transaction : transaction) =>
+      switch(transaction)
+        Coinbase(to, amount) => acc_state{ [to = 0] @ balance = balance + amount }
+        Transaction(from, to, amount, fee) =>
+          let acc_state = acc_state{ [from] @ balance = balance - amount - fee }
+          let acc_state = acc_state{ [to = 0] @ balance = balance + amount }
+          acc_state{ [miner = 0] @ balance = balance + fee }
+
+  function mine_find_nonce(candidate : header) : header =
+    if(candidate.target >= Bytes.to_int(Crypto.blake2b(candidate)))
+      candidate
+    else
+      mine_find_nonce(candidate{ nonce = candidate.nonce + 1 })
+
+  stateful function add_block(block : block) : unit =
+    require(None == List.find((tx) => !valid_tx(tx), block.txs), "block has invalid tx")
+    require(block.header.prev_hash == state.top_block_hash, "block has to be added to top")
+    let updated_chainstate = List.foldl(apply_to_chainstate(Call.caller), state.chainstate, block.txs)
+    let block_hash = Crypto.blake2b(block.header)
+    put(state{ chain[block_hash] = block,
+               chainstate        = updated_chainstate,
+               top_block_hash    = block_hash})
+    List.foreach(block.txs, (tx) => put(state{pool = Map.delete(Crypto.blake2b(tx), state.pool)}))
+
+  function genesis_header() : header =
+    mine_find_nonce(
+      { prev_hash  = #0000000000000000000000000000000000000000000000000000000000000000,
+        height     = 0,
+        target     = Bytes.to_int(#00f0000000000000000000000000000000000000000000000000000000000000),
+        txs_hash   = Crypto.blake2b([]),
+        state_hash = Crypto.blake2b({}),
+        timestamp  = Chain.timestamp,
+        nonce      = 0 })
