@@ -1,7 +1,7 @@
 {
-  "name": "Example Aepp",
-  "short_name": "Example Aepp",
-  "description": "Example Description.",
+  "name": "Stupidchain",
+  "short_name": "Stupidchain",
+  "description": "Stupidchain.",
   "dir": "auto",
   "lang": "en-US",
   "display": "standalone",
